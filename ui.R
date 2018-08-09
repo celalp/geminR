@@ -3,6 +3,9 @@
 # For more feature requests email alper.celik@sickkids.ca
 
 # this is a two file shiny app the other one is called server.R
+
+
+######### TODO 
 # move tabs around, add another value box with # of affected genes
 # impact distribution pie
 
@@ -23,45 +26,38 @@ library(billboarder)
 library(shinycssloaders)
 library(dashboardthemes)
 
+print("ui loaded")
 
 source("dbDT.R")
+
 
 ui<-dashboardPage(
   dashboardHeader(title = "geminR"
                   #dropdownMenuOutput("files")
   ),
   dashboardSidebar(
-    #shinyFilesButton("dbs", "Database", icon=icon("database") ,
-    #                 "Please select your database location", FALSE),
-    #bsTooltip(id = "dbs", "Select Gemini databse"),
-    #shinyDirButton("directory", "Gemini", icon=icon("microchip"),  
-    #               "Please select gemini installation location"),
-    #bsTooltip(id = "directory", "Select Gemini installation locations"),
-    
     selectInput("db_select", "Select Database", 
                 choices = c("ibd_6sample.db", "ibd_bcbio_vcfanno.db"), 
                 selected = NULL),
     actionButton("load", label = "Load"), 
     bsTooltip(id = "load", "Load Database"),
+    br(),
     sidebarMenu(
       menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard"), selected=TRUE),
       menuItem("Variants Table/Search", tabName = "variants", icon = icon("search")),
       menuItem("Review Jobs", tabName = "jobs", icon = icon("gears"))
-      #menuItem("Settings/Help", tabName = "settings", icon = icon("question"))
     )
   ),
-  
   dashboardBody(
     useToastr(),
     shinyDashboardThemes(theme = "poor_mans_flatly"),
     tabItems(
       tabItem(tabName = "dashboard",
-              fluidRow(
-                box(title = "Basic Database Stats", width = 12, 
-                    withSpinner(
-                      uiOutput("overview")
-                    )
-                ))),
+              box(title = "Basic Database Stats", width = 12, 
+                  withSpinner(
+                    uiOutput("overview")
+                  )
+              )),
       tabItem(tabName = "variants",
               fluidRow(
                 tabBox(title = "Search Variants", width = 3, 
@@ -96,23 +92,12 @@ ui<-dashboardPage(
                                     ))
                                 )),
                        tabPanel("SQL/Gemini queries", 
-                                tagList(
-                                  fluidRow(
-                                    tagList(
-                                      uiOutput("sql_tools_columns"), 
-                                      uiOutput("sql_filters")
-                                    ),
-                                    tagList(
-                                      uiOutput("sql_filters"),
-                                      checkboxInput("is_manual", "Enter manual SQL query"), 
-                                      uiOutput("advSQL")
-                                    ),
-                                    tagList(
-                                      actionButton("submit_sql", "Submit Query")
-                                    )
-                                  ))
-                       ) 
-                       
+                                uiOutput("sql_tools_columns"), 
+                                uiOutput("sql_filters"),
+                                checkboxInput("is_manual", "Enter manual SQL query"), 
+                                uiOutput("advSQL"),
+                                actionButton("submit_sql", "Submit Query")
+                       )
                 ),
                 box(title="Variants", width = 9, 
                     tagList(
@@ -135,8 +120,7 @@ ui<-dashboardPage(
                 )
               ))
     )
-  )
-)
+  ))
 
 
 

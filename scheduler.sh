@@ -7,6 +7,7 @@
 # geminR to use. 
 
 # this is not for the desktop use of GeminR it is for shinyproxy only
+# depending on the machine geminR is running you can adjust the number of jobs
 
 if [ -e scheduler.log ] 
   then
@@ -47,7 +48,7 @@ while true
     echo $(date) "$JOB_COMMAND for $JOB_NAME submitted" >> ./scheduler.log
     bash job_submit.sh "$JOB_COMMAND" "$JOB_NAME" "$DB"
   else 
-    sleep 1
+    sleep 10
   fi
 done
 
