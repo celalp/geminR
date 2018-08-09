@@ -3,9 +3,6 @@
 # For more feature requests email alper.celik@sickkids.ca
 
 # this is a two file shiny app the other one is called server.R
-
-
-
 # move tabs around, add another value box with # of affected genes
 # impact distribution pie
 
@@ -60,11 +57,11 @@ ui<-dashboardPage(
     tabItems(
       tabItem(tabName = "dashboard",
               fluidRow(
-              box(title = "Basic Database Stats", width = 12, 
-                  withSpinner(
-                    uiOutput("overview")
-                  )
-              ))),
+                box(title = "Basic Database Stats", width = 12, 
+                    withSpinner(
+                      uiOutput("overview")
+                    )
+                ))),
       tabItem(tabName = "variants",
               fluidRow(
                 tabBox(title = "Search Variants", width = 3, 
@@ -138,7 +135,8 @@ ui<-dashboardPage(
                 )
               ))
     )
-  ))
+  )
+)
 
 
 

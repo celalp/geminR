@@ -1,18 +1,18 @@
-# !/bin/bash
+#! /bin/bash
 
 COMMAND=$1
 NAME=$2
 DB=$3
 
-eval "$COMMAND 1> $NAME.csv 2> $JOB_NAME.err"
+eval "$COMMAND 1> $NAME.tsv 2> $NAME.err"
 CODE=$?
 
 if [ $CODE -eq 0 ]
   then 
     sqlite3 $DB "UPDATE jobs SET status = 'done' where job_name = \"$NAME\""
     sqlite3 $DB "UPDATE jobs SET exit_code = $CODE where job_name = \"$NAME\""
-    #import the data into the database
-    rm $JOB_NAME.err
+    python3 insert_data.py -f $NAME.tsv -d $DB -t $NAME -c 1000 2> $NAME.err
+    rm $NAME.err
     echo $(date) "$NAME done" >> ./scheduler.log
   else 
     sqlite3 $DB "UPDATE jobs SET status = 'error' where job_name = \"$NAME\""
