@@ -4,6 +4,12 @@
 
 # this is a two file shiny app the other one is called ui.R
 
+####TODO 
+# test toastr
+# another tab for logs
+# remove column filters
+# get the sql ui going but doesnt have to be functionsl
+
 library(shiny)
 library(shinyWidgets)
 library(RSQLite)
@@ -17,8 +23,12 @@ library(shinyFiles) #needs to be the dev version
 library(shinydashboard)
 library(shinytoastr)
 library(billboarder)
+library(highcharter)
 library(shinycssloaders)
 library(dashboardthemes)
+library(plotly)
+library(ggplot2)
+library(tm)
 
 print("server loaded")
 
@@ -38,8 +48,9 @@ server <- function(input, output, session) {
         system("gemini -v", intern = T) #this is wrong need to make sure that
       #it actually gets the gemini
       toastr_success("Gemini found", gemv)
-      locs <- list(db = con, db_loc = db)
+      locs <- list(db = con, db_loc = db_loc)
       db_startup_check(con, db_loc)
+      print(db_loc)
       return(locs)
     },
     error = function(e) {
@@ -53,10 +64,10 @@ server <- function(input, output, session) {
       return(NULL)
     } else {
       tablenames <- dbListTables(conn = locations()$db)
+      to_rem<-c("features", "jobs", "sqlite_sequence", "vcf_header", "version")
+      tablenames<-tablenames[! tablenames %in% to_rem]
       table_info <- list()
       for (table in tablenames) {
-        if (table != "version") {
-        }
         table_info[[table]] <-
           dbGetQuery(locations()$db,
                      paste0("PRAGMA table_info(", table, ")"))
@@ -67,9 +78,18 @@ server <- function(input, output, session) {
   })
   
   output$overview <- renderUI({
+    genotypes<-dbGetQuery(locations()$db, "select * from sample_genotype_counts")
+    genm<-melt(genotypes[,-1])
+    genm$sample<-as.factor(genotypes$sample_id)
+    gen_p<-ggplot(genm, aes(x=sample, y=value, fill=variable))+
+      geom_bar(stat = "identity")+theme_minimal()+
+      theme(legend.position="none")+
+      xlab("Sample Name")+ylab("Number of Variants")
+    
     if (!is.null(locations())) {
       toastr_info(title = "Gathering Database stats", "Please wait...")
-      tagList(fluidRow(
+      tagList(
+        fluidRow(
         valueBox(
           dbGetQuery(locations()$db, "select count (*) from samples"),
           "Samples",
@@ -103,44 +123,55 @@ server <- function(input, output, session) {
           icon = icon("medkit"),
           color = "blue" ,
           width = 3
-        )
-      ),
-      fluidRow(column(
-        width = 12,
-        column(
-          width = 4,
-          billboarder() %>%
-            bb_piechart(count(
-              dbGetQuery(locations()$db, "select phenotype from samples")
-            )) %>%
-            bb_labs(title = "Phenotype distribution")
         ),
         column(
-          width = 4,
-          billboarder() %>%
-            bb_piechart(count(
-              dbGetQuery(locations()$db, "select sex from samples")
-            )) %>%
-            bb_labs(title = "Sex distribution")
+          width = 3,
+          renderPlotly(
+            plot_ly(count(dbGetQuery(locations()$db, "select phenotype from samples")),
+            labels = ~phenotype, values = ~freq, type = 'pie') %>%
+              layout(title ="Phenotype Distribution")
+          )
         ),
         column(
-          width = 4,
-          billboarder() %>%
-            bb_piechart(count(
-              dbGetQuery(locations()$db, "select impact_severity from variants")
-            )) %>%
-            bb_labs(title = "Impact Severity")
-        )
-      )))
+          width = 3,
+          renderPlotly(
+            plot_ly(count(dbGetQuery(locations()$db, "select sex from samples")),
+                    labels = ~sex, values = ~freq, type = 'pie') %>%
+              layout(title ="Sex Distribution")
+          )
+        ),
+        br(),
+        column(
+          width = 3,
+          renderPlotly(
+            plot_ly(count(dbGetQuery(locations()$db, "select impact_severity from variants")),
+                    labels = ~impact_severity, values = ~freq, type = 'pie') %>%
+              layout(title ="Impact Severity Distribution")
+          )),
+          column(width = 3,
+        renderPlotly(
+          ggplotly(gen_p)
+        ))
+      ))
     } else {
       NULL
     }
   })
   
+  output$variant_table_params<-renderUI({
+    tagList(
+    div(style="display:inline-block;",    
+    pickerInput(inputId = "variant_table_select", 
+                label="Select table to Display", 
+                choices = db_info()$tablenames, 
+                multiple = F, selected = "variants")),
+    div(style="display:inline-block;",
+    numericInput(inputId = "page_len", "Page length", value = 10))
+    )
+  })
   
-  
-  limit <- 10
-  table <- "variants"
+  limit <- reactive({input$page_len})
+  table <- reactive({input$variant_table_select})
   ##### these values need to be reactive
   
   callModule(
@@ -522,15 +553,21 @@ server <- function(input, output, session) {
   observeEvent(input$submit_gem, {
     command <- generate_command(input$built_in, input)
     command <- paste(command, locations()$db_loc)
+    print(command)
     # need to check if the table name already exists and give a toastr
     # alert
+    job_name<-input$job_name_gem
+    job_name<-stripWhitespace(job_name)
+    job_name<-gsub(" ", "", job_name)
     insert_command<-paste0("INSERT INTO jobs(job_name, command, status, exit_code) VALUES(", 
-                          " \"", input$job_name_gem, " \",", 
-                          " \"", command, "\"", 
-                          ",", "\"waiting\"" , ",", "\"NA\"", ")")
+                           " \"", job_name, "\",",
+                           " \"", command, "\"", 
+                           ",", "\"waiting\"" , ",", "\"NA\"", ")")
     #print(insert_command)
     dbSendQuery(locations()$db, insert_command)
-    system(paste("bash scheduler.sh", locations()$db_loc, 1))
+    system2("bash", args = c("scheduler.sh", locations()$db_loc, 1, "&"))
+    toastr_success("Job submitted", paste("This will appear as ", input$job_name_gem, 
+                                          "in the database after successful completion"))
   })
   
   
@@ -562,12 +599,13 @@ server <- function(input, output, session) {
   })
   
   output$jobstable <- renderDT({
+    data<-dbGetQuery(locations()$db, "select * from jobs")
     datatable(
-      dbGetQuery(locations()$db, "select * from jobs"),
+      data,
       selection = "none",
       autoHideNavigation = F,
       rownames = F,
-      options = list(pageLength = limit, dom = 't')
+      options = list(dom = 't')
     )
     #verbatimTextOutput(command())
   })

@@ -21,8 +21,6 @@ echo $(date) "Scheduler Starting" >> ./scheduler.log
 DB=$1
 MAX_JOBS=$2
 
-echo "jobnum $MAX_JOBS"
-
 parse_job(){
   local db=$1
   JOB_PARAMS=$(sqlite3 -separator ':' $db "SELECT * FROM jobs WHERE status=\"waiting\" LIMIT 1" )
@@ -33,7 +31,7 @@ parse_job(){
     else 
       JOB_NAME=$(echo $JOB_PARAMS | cut -d ':' -f 2 )
       JOB_COMMAND=$(echo $JOB_PARAMS | cut -d ':' -f 3)
-      sqlite3 $DB "UPDATE jobs SET status = 'running' where job_name = \"$JOB_NAME\""
+      sqlite3 $db "UPDATE jobs SET status = 'running' where job_name = \"$JOB_NAME\""
   fi
 }
 
@@ -41,12 +39,12 @@ parse_job(){
 while true
   do 
   RUNNING=$(sqlite3 -separator ':' $DB "SELECT count(*) FROM jobs WHERE status=\"running\"" )
-  echo ${#RUNNING}
-  if [ $RUNNING -lt $MAX_JOBS ]
+  #echo ${#RUNNING}
+  if [ ${RUNNING} -lt $MAX_JOBS ]
   then
     parse_job $DB
     echo $(date) "$JOB_COMMAND for $JOB_NAME submitted" >> ./scheduler.log
-    bash job_submit.sh "$JOB_COMMAND" "$JOB_NAME" "$DB"
+    bash job_submit.sh "$JOB_COMMAND" "$JOB_NAME" "$DB" &
   else 
     sleep 10
   fi

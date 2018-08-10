@@ -1,0 +1,20 @@
+Fri 10 Aug 2018 18:07:13 EDT Creating scheduler log for the first time
+Fri 10 Aug 2018 18:07:13 EDT Scheduler Starting
+Fri 10 Aug 2018 18:07:13 EDT gemini de_novo --columns '*' /Users/Shared/dbs/ibd_6sample.db for job40 submitted
+Fri 10 Aug 2018 18:09:32 EDT job40 done
+Fri 10 Aug 2018 18:09:33 EDT There are no pendig jobs
+Fri 10 Aug 2018 18:21:51 EDT Found log file
+Fri 10 Aug 2018 18:21:51 EDT Scheduler Starting
+Fri 10 Aug 2018 18:21:51 EDT gemini de_novo --columns '*' /Users/Shared/dbs/ibd_6sample.db for job41 submitted
+Fri 10 Aug 2018 18:24:08 EDT job41 done
+Fri 10 Aug 2018 18:24:11 EDT There are no pendig jobs
+Fri 10 Aug 2018 18:24:59 EDT Found log file
+Fri 10 Aug 2018 18:24:59 EDT Scheduler Starting
+Fri 10 Aug 2018 18:24:59 EDT gemini de_novo --columns '*' /Users/Shared/dbs/ibd_6sample.db for Job50  submitted
+Fri 10 Aug 2018 18:25:00 EDT There was an error in running the command see errlog Job50 .err
+Fri 10 Aug 2018 18:25:09 EDT There are no pendig jobs
+Fri 10 Aug 2018 18:34:59 EDT Found log file
+Fri 10 Aug 2018 18:34:59 EDT Scheduler Starting
+Fri 10 Aug 2018 18:34:59 EDT gemini de_novo --columns '*' --allow-unaffected --lenient /Users/Shared/dbs/ibd_6sample.db for job51 submitted
+Fri 10 Aug 2018 18:37:12 EDT job51 done
+Fri 10 Aug 2018 18:37:19 EDT There are no pendig jobs

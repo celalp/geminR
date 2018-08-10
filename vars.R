@@ -86,7 +86,7 @@ generate_command<-function(method, input){
       }
       parsed<-paste(parsed, opt)
     }
-    command<-paste0("gemini", " ", method_name, parsed)
+    command<-paste0("gemini ", method_name, " --columns '*'", parsed)
   }
   return(command)
 }

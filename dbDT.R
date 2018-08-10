@@ -44,22 +44,23 @@ dbDT<-function(input, output, session, con, table, limit){
     pickerInput(
       inputId = ns("columns_selected"), 
       label = "Select Columns to display",
-      choices = dbGetQuery(con, paste0("pragma table_info(", table, ")"))[,2], 
+      choices = dbGetQuery(con, paste0("pragma table_info(", table(), ")"))[,2], 
       multiple = T, selected=selected,
       options = list(`actions-box` = T, `live-search`=T, size=10))
   })
   
   quer<-reactive({
-    result<-dbGetQuery(con, paste("select * from", table, "limit", limit, "offset",
-                          limit*(page$page-1)))
-    pages<-unlist(dbGetQuery(con, paste("select count(*) from", table)))
-    pages<-ceiling(pages/limit)
+    command<-paste("select * from", table(), "limit", limit(), "offset",
+                   limit()*(page$page-1))
+    result<-dbGetQuery(con, command)
+    pages<-unlist(dbGetQuery(con, paste("select count(*) from", table())))
+    pages<-ceiling(pages/limit())
     return(list(result=result, pages=pages))
     })
   
   output$table<-renderDT({
     datatable(quer()$result[, input$columns_selected], selection="multiple", autoHideNavigation = F, rownames = F, 
-              options = list(pageLength = limit, dom = 't', scrollX = TRUE), extensions = "Scroller")
+              options = list(pageLength = limit(), dom = 't', scrollX = TRUE), extensions = "Scroller")
   })
   
   output$pagecount<-renderText({paste("Displaying Page", page$page, "of", quer()$pages)})

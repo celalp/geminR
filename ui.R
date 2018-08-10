@@ -23,8 +23,11 @@ library(shinyFiles) #needs to be the dev version
 library(shinydashboard)
 library(shinytoastr)
 library(billboarder)
+library(highcharter)
 library(shinycssloaders)
 library(dashboardthemes)
+library(plotly)
+library(ggplot2)
 
 print("ui loaded")
 
@@ -36,10 +39,11 @@ ui<-dashboardPage(
                   #dropdownMenuOutput("files")
   ),
   dashboardSidebar(
+    wellPanel(
     selectInput("db_select", "Select Database", 
-                choices = c("ibd_6sample.db", "ibd_bcbio_vcfanno.db"), 
+                choices = c("ibd_6sample.db", "661d-ensemble.db"), 
                 selected = NULL),
-    actionButton("load", label = "Load"), 
+    actionButton("load", label = "Load")), 
     bsTooltip(id = "load", "Load Database"),
     br(),
     sidebarMenu(
@@ -67,7 +71,7 @@ ui<-dashboardPage(
                                     pickerInput(
                                       inputId = "built_in",
                                       label = "Select built in tool", 
-                                      choices = c("Compound Heterozygotes", "De novo mutations",
+                                      choices = c("De novo mutations",
                                                   "Non-mendelian transmission", "Autosomal recessive", 
                                                   "Autosomal dominant", "X-linked recessive", 
                                                   "X-linked dominant", "X-linked de novo", 
@@ -76,7 +80,7 @@ ui<-dashboardPage(
                                                   "Filter by region", "Filter by window", 
                                                   "Calculate genetic burden", "ROH (runs of homozygosity)", 
                                                   "Get somatic variants", "Report actionable mutations", 
-                                                  "Get gene fusions"), 
+                                                  "Get gene fusions", "Compound Heterozygotes"), 
                                       options = list(size=10)
                                     )),
                                   fluidRow(
@@ -99,8 +103,9 @@ ui<-dashboardPage(
                                 actionButton("submit_sql", "Submit Query")
                        )
                 ),
-                box(title="Variants", width = 9, 
+                box(title="Variant Browser", width = 9, 
                     tagList(
+                      uiOutput("variant_table_params"),
                       uiOutput("col_select"),
                       dbDTUI("db_query_table")
                     )#put columns selection, page navigation, statesave, export
@@ -112,13 +117,10 @@ ui<-dashboardPage(
                 # The gemini built in tools are different than just submittin SQL queries
                 # I assume they are some elaborate queries, I looked around for the exact queries
                 # in the github page but did not find them. So i will 
-                tabBox(
-                  title = "Retrieve Data", width = 12, 
-                  id = "gemini",
-                  tabPanel(title="Current/Past Jobs", 
-                           uiOutput("jobstable"))
+                box(title = "Submitted Jobs", solidHeader = T,width=12, 
+                           DTOutput("jobstable"))
                 )
-              ))
+              )
     )
   ))
 
