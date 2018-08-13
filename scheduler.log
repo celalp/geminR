@@ -18,3 +18,23 @@ Fri 10 Aug 2018 18:34:59 EDT Scheduler Starting
 Fri 10 Aug 2018 18:34:59 EDT gemini de_novo --columns '*' --allow-unaffected --lenient /Users/Shared/dbs/ibd_6sample.db for job51 submitted
 Fri 10 Aug 2018 18:37:12 EDT job51 done
 Fri 10 Aug 2018 18:37:19 EDT There are no pendig jobs
+Sun 12 Aug 2018 16:47:10 EDT Found log file
+Sun 12 Aug 2018 16:47:10 EDT Scheduler Starting
+Sun 12 Aug 2018 16:47:10 EDT gemini x_linked_recessive --columns '*' -X X /Users/Shared/dbs/ibd_6sample.db for x_linked_recessive submitted
+Sun 12 Aug 2018 16:47:13 EDT x_linked_recessive done
+Sun 12 Aug 2018 16:47:20 EDT There are no pendig jobs
+Sun 12 Aug 2018 17:02:43 EDT Found log file
+Sun 12 Aug 2018 17:02:43 EDT Scheduler Starting
+Sun 12 Aug 2018 17:02:43 EDT gemini de_novo --columns '*' /Users/Shared/dbs/ibd_6sample.db for DENOVO submitted
+Sun 12 Aug 2018 17:04:58 EDT DENOVO done
+Sun 12 Aug 2018 17:05:03 EDT There are no pendig jobs
+Sun 12 Aug 2018 17:08:15 EDT Found log file
+Sun 12 Aug 2018 17:08:15 EDT Scheduler Starting
+Sun 12 Aug 2018 17:08:15 EDT gemini x_linked_recessive --columns '*' /Users/Shared/dbs/ibd_6sample.db for X_res submitted
+Sun 12 Aug 2018 17:08:22 EDT X_res done
+Sun 12 Aug 2018 17:08:26 EDT There are no pendig jobs
+Sun 12 Aug 2018 17:12:36 EDT Found log file
+Sun 12 Aug 2018 17:12:36 EDT Scheduler Starting
+Sun 12 Aug 2018 17:12:36 EDT gemini de_novo --columns '*' /Users/Shared/dbs/ibd_6sample.db for DENOVO2 submitted
+Sun 12 Aug 2018 17:14:54 EDT DENOVO2 done
+Sun 12 Aug 2018 17:14:56 EDT There are no pendig jobs

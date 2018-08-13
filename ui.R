@@ -117,8 +117,12 @@ ui<-dashboardPage(
                 # The gemini built in tools are different than just submittin SQL queries
                 # I assume they are some elaborate queries, I looked around for the exact queries
                 # in the github page but did not find them. So i will 
-                box(title = "Submitted Jobs", solidHeader = T,width=12, 
-                           DTOutput("jobstable"))
+                tabBox(title = "Jobs Overview",width=12, 
+                       tabPanel("Submitted Jobs",
+                           DTOutput("jobstable")), 
+                       tabPanel("Scheduler logs", 
+                           DTOutput("logfile")
+                                ))
                 )
               )
     )

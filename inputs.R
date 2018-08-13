@@ -25,7 +25,7 @@ max_pri<-selectInput(inputId = "max_priority", label = "Max priority", choices =
 
 gene_where<-textInput(inputId = "gene_where", label = "gene_where")
 
-X<-textInput(inputId = "X", label = "X", value = "X")
+X<-textInput(inputId = "X", label = "X", value = NULL)
 
 gt_filter<-textAreaInput(inputId = "gt_filter", label = "gt filters", 
                         placeholder = "Enter GT filters one per line")

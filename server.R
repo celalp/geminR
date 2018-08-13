@@ -5,10 +5,8 @@
 # this is a two file shiny app the other one is called ui.R
 
 ####TODO 
-# test toastr
 # another tab for logs
-# remove column filters
-# get the sql ui going but doesnt have to be functionsl
+# get the sql ui going but doesnt have to be functional
 
 library(shiny)
 library(shinyWidgets)
@@ -68,9 +66,10 @@ server <- function(input, output, session) {
       tablenames<-tablenames[! tablenames %in% to_rem]
       table_info <- list()
       for (table in tablenames) {
-        table_info[[table]] <-
-          dbGetQuery(locations()$db,
-                     paste0("PRAGMA table_info(", table, ")"))
+        columns<-dbGetQuery(locations()$db,
+                            paste0("PRAGMA table_info(", table, ")"))
+        columns<-columns[columns$type!="BLOB",]
+        table_info[[table]] <-columns
       }
       info = list(tablenames = tablenames, table_info = table_info)
       return(info)
@@ -90,69 +89,69 @@ server <- function(input, output, session) {
       toastr_info(title = "Gathering Database stats", "Please wait...")
       tagList(
         fluidRow(
-        valueBox(
-          dbGetQuery(locations()$db, "select count (*) from samples"),
-          "Samples",
-          icon = icon("user"),
-          color = "teal",
-          width = 3
-        ),
-        valueBox(
-          dbGetQuery(
-            locations()$db,
-            "select count (distinct family_id) from samples"
+          valueBox(
+            dbGetQuery(locations()$db, "select count (*) from samples"),
+            "Samples",
+            icon = icon("user"),
+            color = "teal",
+            width = 3
           ),
-          "Familes",
-          icon = icon("venus-mars"),
-          color = "aqua" ,
-          width = 3
-        ),
-        valueBox(
-          dbGetQuery(locations()$db, "select count (*) from variants"),
-          "Variants",
-          icon = icon("flask"),
-          color = "light-blue" ,
-          width = 3
-        ),
-        valueBox(
-          dbGetQuery(
-            locations()$db,
-            "select count (*) from samples where phenotype = 2"
+          valueBox(
+            dbGetQuery(
+              locations()$db,
+              "select count (distinct family_id) from samples"
+            ),
+            "Familes",
+            icon = icon("venus-mars"),
+            color = "aqua" ,
+            width = 3
           ),
-          "Affected Individuals",
-          icon = icon("medkit"),
-          color = "blue" ,
-          width = 3
-        ),
-        column(
-          width = 3,
-          renderPlotly(
-            plot_ly(count(dbGetQuery(locations()$db, "select phenotype from samples")),
-            labels = ~phenotype, values = ~freq, type = 'pie') %>%
-              layout(title ="Phenotype Distribution")
-          )
-        ),
-        column(
-          width = 3,
-          renderPlotly(
-            plot_ly(count(dbGetQuery(locations()$db, "select sex from samples")),
-                    labels = ~sex, values = ~freq, type = 'pie') %>%
-              layout(title ="Sex Distribution")
-          )
-        ),
-        br(),
-        column(
-          width = 3,
-          renderPlotly(
-            plot_ly(count(dbGetQuery(locations()$db, "select impact_severity from variants")),
-                    labels = ~impact_severity, values = ~freq, type = 'pie') %>%
-              layout(title ="Impact Severity Distribution")
-          )),
+          valueBox(
+            dbGetQuery(locations()$db, "select count (*) from variants"),
+            "Variants",
+            icon = icon("flask"),
+            color = "light-blue" ,
+            width = 3
+          ),
+          valueBox(
+            dbGetQuery(
+              locations()$db,
+              "select count (*) from samples where phenotype = 2"
+            ),
+            "Affected Individuals",
+            icon = icon("medkit"),
+            color = "blue" ,
+            width = 3
+          ),
+          column(
+            width = 3,
+            renderPlotly(
+              plot_ly(count(dbGetQuery(locations()$db, "select phenotype from samples")),
+                      labels = ~phenotype, values = ~freq, type = 'pie') %>%
+                layout(title ="Phenotype Distribution")
+            )
+          ),
+          column(
+            width = 3,
+            renderPlotly(
+              plot_ly(count(dbGetQuery(locations()$db, "select sex from samples")),
+                      labels = ~sex, values = ~freq, type = 'pie') %>%
+                layout(title ="Sex Distribution")
+            )
+          ),
+          br(),
+          column(
+            width = 3,
+            renderPlotly(
+              plot_ly(count(dbGetQuery(locations()$db, "select impact_severity from variants")),
+                      labels = ~impact_severity, values = ~freq, type = 'pie') %>%
+                layout(title ="Impact Severity")
+            )),
           column(width = 3,
-        renderPlotly(
-          ggplotly(gen_p)
+                 renderPlotly(
+                   ggplotly(gen_p)
+                 ))
         ))
-      ))
     } else {
       NULL
     }
@@ -160,13 +159,13 @@ server <- function(input, output, session) {
   
   output$variant_table_params<-renderUI({
     tagList(
-    div(style="display:inline-block;",    
-    pickerInput(inputId = "variant_table_select", 
-                label="Select table to Display", 
-                choices = db_info()$tablenames, 
-                multiple = F, selected = "variants")),
-    div(style="display:inline-block;",
-    numericInput(inputId = "page_len", "Page length", value = 10))
+      div(style="display:inline-block;",    
+          pickerInput(inputId = "variant_table_select", 
+                      label="Select table to Display", 
+                      choices = db_info()$tablenames, 
+                      multiple = F, selected = "variants")),
+      div(style="display:inline-block;",
+          numericInput(inputId = "page_len", "Page length", value = 10))
     )
   })
   
@@ -190,22 +189,7 @@ server <- function(input, output, session) {
       } else {
         if (input$built_in == "Compound Heterozygotes") {
           tagList(
-            columns <- picker(
-              "columns",
-              "Select columns to display",
-              actions = T,
-              choices = db_info()$table_info[["variants"]][, 2]
-            ),
             kindred,
-            families <- picker(
-              "families",
-              "Select families",
-              actions = T,
-              choices = unique(unlist(
-                dbGetQuery(locations()$db, "select family_id from samples"),
-                use.names = F
-              ))
-            ),
             depth,
             min_gq,
             gt_pl,
@@ -216,27 +200,11 @@ server <- function(input, output, session) {
                 id = "bools",
                 "other options",
                 options = c("allow-unaffected", "pattern-only")
-              ),
-            add_filters
+              )
           )
         } else if (input$built_in == "De novo mutations") {
           tagList(
-            columns <- picker(
-              "columns",
-              "Select columns to display",
-              actions = T,
-              choices = db_info()$table_info[["variants"]][, 2]
-            ),
             kindred,
-            families <- picker(
-              "families",
-              "Select families",
-              actions = T,
-              choices = unique(unlist(
-                dbGetQuery(locations()$db, "select family_id from samples")
-              ),
-              use.names = F)
-            ),
             depth,
             min_gq,
             gt_pl,
@@ -245,27 +213,11 @@ server <- function(input, output, session) {
                 id = "bools",
                 "other options",
                 options = c("allow-unaffected", "lenient")
-              ),
-            add_filters
+              )
           )
         } else if (input$built_in == "Non-mendelian transmission") {
           tagList(
-            columns <- picker(
-              "columns",
-              "Select columns to display",
-              actions = T,
-              choices = db_info()$table_info[["variants"]][, 2]
-            ),
             kindred,
-            families <- picker(
-              "families",
-              "Select families",
-              actions = T,
-              choices = unique(unlist(
-                dbGetQuery(locations()$db, "select family_id from samples")
-              ),
-              use.names = F)
-            ),
             depth,
             min_gq,
             bools <-
@@ -273,27 +225,11 @@ server <- function(input, output, session) {
                 id = "bools",
                 "other options",
                 options = c("only-affected", "lenient")
-              ),
-            add_filters
+              )
           )
         } else if (input$built_in == "Autosomal recessive") {
           tagList(
-            columns <- picker(
-              "columns",
-              "Select columns to display",
-              actions = T,
-              choices = db_info()$table_info[["variants"]][, 2]
-            ),
             kindred,
-            families <- picker(
-              "families",
-              "Select families",
-              actions = T,
-              choices = unique(unlist(
-                dbGetQuery(locations()$db, "select family_id from samples")
-              ),
-              use.names = F)
-            ),
             depth,
             min_gq,
             gt_pl,
@@ -302,27 +238,11 @@ server <- function(input, output, session) {
                 id = "bools",
                 "other options",
                 options = c("lenient")
-              ),
-            add_filters
+              )
           )
         } else if (input$built_in == "Autosomal dominant") {
           tagList(
-            columns <- picker(
-              "columns",
-              "Select columns to display",
-              actions = T,
-              choices = db_info()$table_info[["variants"]][, 2]
-            ),
             kindred,
-            families <- picker(
-              "families",
-              "Select families",
-              actions = T,
-              choices = unique(unlist(
-                dbGetQuery(locations()$db, "select family_id from samples")
-              ),
-              use.names = F)
-            ),
             depth,
             min_gq,
             gt_pl,
@@ -331,27 +251,11 @@ server <- function(input, output, session) {
                 id = "bools",
                 "other options",
                 options = c("lenient")
-              ),
-            add_filters
+              )
           )
         } else if (input$built_in == "X-linked recessive") {
           tagList(
-            columns <- picker(
-              "columns",
-              "Select columns to display",
-              actions = T,
-              choices = db_info()$table_info[["variants"]][, 2]
-            ),
             kindred,
-            families <- picker(
-              "families",
-              "Select families",
-              actions = T,
-              choices = unique(unlist(
-                dbGetQuery(locations()$db, "select family_id from samples")
-              ),
-              use.names = F)
-            ),
             depth,
             min_gq,
             X,
@@ -360,27 +264,11 @@ server <- function(input, output, session) {
                 id = "bools",
                 "other options",
                 options = c("allow-unaffected")
-              ),
-            add_filters
+              )
           )
         } else if (input$built_in == "X-linked dominant") {
           tagList(
-            columns <- picker(
-              "columns",
-              "Select columns to display",
-              actions = T,
-              choices = db_info()$table_info[["variants"]][, 2]
-            ),
             kindred,
-            families <- picker(
-              "families",
-              "Select families",
-              actions = T,
-              choices = unique(unlist(
-                dbGetQuery(locations()$db, "select family_id from samples")
-              ),
-              use.names = F)
-            ),
             depth,
             min_gq,
             X,
@@ -389,27 +277,11 @@ server <- function(input, output, session) {
                 id = "bools",
                 "other options",
                 options = c("allow-unaffected")
-              ),
-            add_filters
+              )
           )
         } else if (input$built_in == "X-linked de novo") {
           tagList(
-            columns <- picker(
-              "columns",
-              "Select columns to display",
-              actions = T,
-              choices = db_info()$table_info[["variants"]][, 2]
-            ),
             kindred,
-            families <- picker(
-              "families",
-              "Select families",
-              actions = T,
-              choices = unique(unlist(
-                dbGetQuery(locations()$db, "select family_id from samples")
-              ),
-              use.names = F)
-            ),
             depth,
             min_gq,
             X,
@@ -418,21 +290,13 @@ server <- function(input, output, session) {
                 id = "bools",
                 "other options",
                 options = c("allow-unaffected")
-              ),
-            add_filters
+              )
           )
         } else if (input$built_in == "Gene wise filtering") {
           tagList(
-            columns <- picker(
-              "columns",
-              "Select columns to display",
-              actions = T,
-              choices = db_info()$table_info[["variants"]][, 2]
-            ),
             gene_where,
             gt_filter,
-            gt_filter_required,
-            add_filters
+            gt_filter_required
           )
         } else if (input$built_in == "KEGG pathways") {
           tagList(v,
@@ -456,12 +320,6 @@ server <- function(input, output, session) {
           tagList(h4("This method does not have any additional arguments"))
         } else if (input$built_in == "Filter by region") {
           tagList(
-            columns <- picker(
-              "columns",
-              "Select columns to display",
-              actions = T,
-              choices = db_info()$table_info[["variants"]][, 2]
-            ),
             reg,
             g,
             bools <-
@@ -469,8 +327,7 @@ server <- function(input, output, session) {
                 id = "bools",
                 "other options",
                 options = c("header", "show-samples")
-              ),
-            add_filters
+              )
           )
         } else if (input$built_in == "Filter by window") {
           tagList(w,
@@ -511,16 +368,7 @@ server <- function(input, output, session) {
             min_gt_depth,
             min_size,
             max_hets,
-            max_unknowns,
-            samples <- picker(
-              id = "samples",
-              label = "Samples",
-              choices = unlist(
-                dbGetQuery(locations()$db, "select name from samples"),
-                use.names = F
-              ),
-              actions = T
-            )
+            max_unknowns
           )
         } else if (input$built_in == "Report actionable mutations") {
           h4("This method does not have any additional arguments")
@@ -535,20 +383,6 @@ server <- function(input, output, session) {
       }
     })
   
-  output$gemini_filter <- renderUI({
-    if (is.null(locations())) {
-      NULL
-    } else if (input$add_filters) {
-      tagList(
-        picker(
-          id = "var_filters",
-          label = "Select columns to filter",
-          choices = db_info()$table_info[["variants"]][, 2],
-          actions = T
-        )
-      )
-    }
-  })
   
   observeEvent(input$submit_gem, {
     command <- generate_command(input$built_in, input)
@@ -557,17 +391,23 @@ server <- function(input, output, session) {
     # need to check if the table name already exists and give a toastr
     # alert
     job_name<-input$job_name_gem
-    job_name<-stripWhitespace(job_name)
-    job_name<-gsub(" ", "", job_name)
-    insert_command<-paste0("INSERT INTO jobs(job_name, command, status, exit_code) VALUES(", 
-                           " \"", job_name, "\",",
-                           " \"", command, "\"", 
-                           ",", "\"waiting\"" , ",", "\"NA\"", ")")
-    #print(insert_command)
-    dbSendQuery(locations()$db, insert_command)
-    system2("bash", args = c("scheduler.sh", locations()$db_loc, 1, "&"))
-    toastr_success("Job submitted", paste("This will appear as ", input$job_name_gem, 
-                                          "in the database after successful completion"))
+    not_error<-db_info()$table_info[["jobs"]]
+    not_error<-not_error[status=!"error", 2]
+    if(job_name %in% db_info()$tablenames | job_name %in% not_error) {
+      toastr_error("Table name conflict", paste(input$job_name_gem, "already exists"))
+    } else {
+      job_name<-stripWhitespace(job_name)
+      job_name<-gsub(" ", "", job_name)
+      insert_command<-paste0("INSERT INTO jobs(job_name, command, status, exit_code) VALUES(", 
+                             " \"", job_name, "\",",
+                             " \"", command, "\"", 
+                             ",", "\"waiting\"" , ",", "\"NA\"", ")")
+      #print(insert_command)
+      dbSendQuery(locations()$db, insert_command)
+      system2("bash", args = c("scheduler.sh", locations()$db_loc, 1, "&"))
+      toastr_success("Job submitted", paste("This will appear as ", input$job_name_gem, 
+                                            "in the database after successful completion"))
+    }
   })
   
   
@@ -604,9 +444,18 @@ server <- function(input, output, session) {
       data,
       selection = "none",
       autoHideNavigation = F,
-      rownames = F,
-      options = list(dom = 't')
+      rownames = F
     )
     #verbatimTextOutput(command())
+  })
+  
+  output$logfile<-renderDT({
+    logs<-read.table("scheduler.log", header = F, sep = "\t")
+    datatable(
+      logs,
+      selection = "none",
+      autoHideNavigation = F,
+      rownames = F
+    )
   })
 }
